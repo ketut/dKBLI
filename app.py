@@ -2,55 +2,69 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import time
+import joblib
 
-# Load model dan tokenizer langsung dari Hugging Face
+# Setup device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load model dan tokenizer dari Hugging Face
 tokenizer = AutoTokenizer.from_pretrained("ketut/dKBLI")
 model = AutoModelForSequenceClassification.from_pretrained("ketut/dKBLI")
-
-# Setup device (GPU jika ada, kalau tidak CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
+# Coba memuat label_encoder (jika ada file lokal)
+try:
+    label_encoder = joblib.load("label_encoder.pkl")
+    st.write(f"Jumlah label dari label_encoder: {len(label_encoder.classes_)}")
+except FileNotFoundError:
+    # Jika label_encoder.pkl tidak ada, definisikan manual (sesuaikan dengan R201B)
+    st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
+    kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
+    from sklearn.preprocessing import LabelEncoder
+    label_encoder = LabelEncoder()
+    label_encoder.fit(kbli_codes)
+
+# Cek jumlah label dari model untuk verifikasi
+st.write(f"Jumlah label dari model: {model.config.num_labels}")
+
 # Fungsi prediksi
-def predict_kbli(r201, r202, model, tokenizer, device):
-    # Tokenisasi input
-    inputs = tokenizer(r201, r202, return_tensors="pt", truncation=True, padding=True, max_length=128)
+def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
+    combined_text = f"{text_r201} {text_r202}"
+    inputs = tokenizer(combined_text, padding=True, truncation=True, max_length=128, return_tensors="pt")
     inputs = {key: val.to(device) for key, val in inputs.items()}
-    
-    # Prediksi
     model.eval()
     with torch.no_grad():
         outputs = model(**inputs)
-        prediction = torch.argmax(outputs.logits, dim=1).item()
-    
-    # Misalkan label (sesuaikan dengan modelmu)
-    label_encoder = {0: "Tidak Cocok", 1: "Cocok"}  # Ganti sesuai label asli
-    return label_encoder[prediction]
+    logits = outputs.logits
+    predicted_class = torch.argmax(logits, dim=-1).item()
+    # Debugging
+    st.write(f"Indeks prediksi: {predicted_class}")
+    try:
+        return label_encoder.inverse_transform([predicted_class])[0]
+    except ValueError:
+        return f"Error: Indeks {predicted_class} tidak ada di label_encoder"
 
 # Antarmuka Streamlit
-st.title("Pencari KBLI dengan Model Hugging Face")
-st.write("Masukkan Rincian 201 dan Rincian 202 untuk memprediksi kecocokan KBLI.")
+st.title("Pencari Kode KBLI")
+st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
 # Form input
 with st.form(key="kbli_form"):
-    r201 = st.text_input("Rincian 201", value="Pedagang ayam potong")
-    r202 = st.text_input("Rincian 202", value="Ayam potong")
-    submit_button = st.form_submit_button(label="Cari KBLI")
+    r201 = st.text_input("Rincian 201", value="Menjual Canang sari")
+    r202 = st.text_input("Rincian 202", value="Canang sari")
+    submit_button = st.form_submit_button(label="Cari Kode KBLI")
 
 # Proses setelah tombol ditekan
 if submit_button:
     if r201 and r202:
-        with st.spinner("Memprediksi..."):
-            # Hitung waktu inferensi
+        with st.spinner("Memprediksi kode KBLI..."):
             start_time = time.time()
-            prediction = predict_kbli(r201, r202, model, tokenizer, device)
+            prediction = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
             inference_time = time.time() - start_time
-            
-            # Tampilkan hasil
             st.success("Hasil Prediksi:")
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
-            st.write(f"**Prediksi:** {prediction}")
+            st.write(f"**Kode KBLI:** {prediction}")
             st.write(f"**Waktu Inferensi:** {inference_time:.6f} detik")
     else:
         st.warning("Harap isi kedua rincian sebelum mencari!")
