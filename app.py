@@ -1,6 +1,7 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+import time
 
 # Load model dan tokenizer langsung dari Hugging Face
 tokenizer = AutoTokenizer.from_pretrained("ketut/dKBLI")
