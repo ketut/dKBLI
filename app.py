@@ -3,6 +3,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import time
 import joblib
+import numpy as np
 
 # Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,7 +28,7 @@ except FileNotFoundError:
 # Cek jumlah label dari model untuk verifikasi
 st.write(f"Jumlah label dari model: {model.config.num_labels}")
 
-# Fungsi prediksi
+# Fungsi prediksi dengan persentase keyakinan
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
     combined_text = f"{text_r201} {text_r202}"
     inputs = tokenizer(combined_text, padding=True, truncation=True, max_length=128, return_tensors="pt")
@@ -36,13 +37,17 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
     with torch.no_grad():
         outputs = model(**inputs)
     logits = outputs.logits
-    predicted_class = torch.argmax(logits, dim=-1).item()
+    # Apply softmax to get probabilities
+    probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]  # Move to CPU and convert to numpy
+    predicted_class = np.argmax(probabilities)  # Get the index of the highest probability
+    confidence = probabilities[predicted_class] * 100  # Convert to percentage
     # Debugging
     st.write(f"Indeks prediksi: {predicted_class}")
     try:
-        return label_encoder.inverse_transform([predicted_class])[0]
+        predicted_label = label_encoder.inverse_transform([predicted_class])[0]
+        return predicted_label, confidence
     except ValueError:
-        return f"Error: Indeks {predicted_class} tidak ada di label_encoder"
+        return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
 
 # Antarmuka Streamlit
 st.title("Pencari Kode KBLI")
@@ -59,12 +64,13 @@ if submit_button:
     if r201 and r202:
         with st.spinner("Memprediksi kode KBLI..."):
             start_time = time.time()
-            prediction = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
+            prediction, confidence = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
             inference_time = time.time() - start_time
             st.success("Hasil Prediksi:")
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
             st.write(f"**Kode KBLI:** {prediction}")
+            st.write(f"**Keyakinan Model:** {confidence:.2f}%")
             st.write(f"**Waktu Inferensi:** {inference_time:.6f} detik")
     else:
         st.warning("Harap isi kedua rincian sebelum mencari!")
