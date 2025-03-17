@@ -16,7 +16,7 @@ model.to(device)
 # Coba memuat label_encoder (jika ada file lokal)
 try:
     label_encoder = joblib.load("label_encoder.pkl")
-    st.write(f"Jumlah label dari label_encoder: {len(label_encoder.classes_)}")
+    #st.write(f"Jumlah label dari label_encoder: {len(label_encoder.classes_)}")
 except FileNotFoundError:
     # Jika label_encoder.pkl tidak ada, definisikan manual (sesuaikan dengan R201B)
     st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
@@ -26,7 +26,7 @@ except FileNotFoundError:
     label_encoder.fit(kbli_codes)
 
 # Cek jumlah label dari model untuk verifikasi
-st.write(f"Jumlah label dari model: {model.config.num_labels}")
+#st.write(f"Jumlah label dari model: {model.config.num_labels}")
 
 # Fungsi prediksi dengan persentase keyakinan
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
