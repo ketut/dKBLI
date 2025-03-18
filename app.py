@@ -75,7 +75,7 @@ if submit_button:
             if len(prediction) == 4:
                 prediction = '0' + prediction
             else:
-                pass
+                prediction = prediction
             st.write(f"**Kode KBLI:** {prediction}")
             # Cari deskripsi dari konsep_kbli.csv berdasarkan kode KBLI
             deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
