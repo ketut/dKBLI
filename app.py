@@ -27,6 +27,8 @@ except FileNotFoundError:
 # Load file konsep_kbli.csv (pastikan file ada di direktori yang sama atau sesuaikan path-nya)
 try:
     kbli_df = pd.read_csv("konsep_kbli.csv")
+    # Pastikan kolom 'kode_kbli' bertipe str
+    kbli_df["kode_kbli"] = kbli_df["kode_kbli"].astype(str)
 except FileNotFoundError:
     st.error("File konsep_kbli.csv tidak ditemukan. Harap sediakan file tersebut.")
     kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])  # Dataframe kosong sebagai fallback
@@ -46,7 +48,7 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
     st.write(f"Indeks prediksi: {predicted_class}")
     try:
         predicted_label = label_encoder.inverse_transform([predicted_class])[0]
-        return predicted_label, confidence
+        return str(predicted_label), confidence  # Pastikan predicted_label bertipe str
     except ValueError:
         return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
 
@@ -70,8 +72,7 @@ if submit_button:
             st.success("Hasil Prediksi:")
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
-            prediction = str(prediction)
-            # Pengecekan panjang kode KBLI
+            # Pengecekan panjang kode KBLI (prediction sudah str dari fungsi predict_r201b)
             if len(prediction) == 4:
                 prediction = '0' + prediction
             else:
