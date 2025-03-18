@@ -75,11 +75,13 @@ if submit_button:
             # Pengecekan panjang kode KBLI (prediction sudah str dari fungsi predict_r201b)
             if len(prediction) == 4:
                 prediction = '0' + prediction
+                deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
             else:
                 prediction = prediction
+                deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
             st.write(f"**Kode KBLI:** {prediction}")
             # Cari deskripsi dari konsep_kbli.csv berdasarkan kode KBLI
-            deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
+            
             if len(deskripsi) > 0:
                 st.write(f"**Deskripsi:** {deskripsi[0]}")
             else:
