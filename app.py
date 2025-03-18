@@ -70,7 +70,7 @@ if submit_button:
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
             # st.write(f"DEBUG -- length of KBLI: {len(prediction)}")
-            if len(prediction) == 4:
+            if len(f"{prediction}") == 4:
                 st.write(f"**Kode KBLI:** 0{prediction}")
             else:
                 st.write(f"**Kode KBLI:** {prediction}")
