@@ -69,8 +69,10 @@ if submit_button:
             st.success("Hasil Prediksi:")
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
-            st.write(f"**Kode KBLI:** {prediction}")
-            st.write(f"**Keyakinan Model:** {confidence:.2f}%")
+            if len(prediction) == 4:
+                st.write(f"**Kode KBLI:** 0{prediction}")
+            else:
+                st.write(f"**Keyakinan Model:** {confidence:.2f}%")
             st.write(f"**Waktu Inferensi:** {inference_time:.6f} detik")
     else:
         st.warning("Harap isi kedua rincian sebelum mencari!")
