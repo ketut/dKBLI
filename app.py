@@ -4,6 +4,7 @@ import torch
 import time
 import joblib
 import numpy as np
+import pandas as pd  # Ditambahkan untuk membaca file CSV
 
 # Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,17 +17,19 @@ model.to(device)
 # Coba memuat label_encoder (jika ada file lokal)
 try:
     label_encoder = joblib.load("label_encoder.pkl")
-    #st.write(f"Jumlah label dari label_encoder: {len(label_encoder.classes_)}")
 except FileNotFoundError:
-    # Jika label_encoder.pkl tidak ada, definisikan manual (sesuaikan dengan R201B)
     st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
     kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
     from sklearn.preprocessing import LabelEncoder
     label_encoder = LabelEncoder()
     label_encoder.fit(kbli_codes)
 
-# Cek jumlah label dari model untuk verifikasi
-#st.write(f"Jumlah label dari model: {model.config.num_labels}")
+# Load file konsep_kbli.csv (pastikan file ada di direktori yang sama atau sesuaikan path-nya)
+try:
+    kbli_df = pd.read_csv("konsep_kbli.csv")
+except FileNotFoundError:
+    st.error("File konsep_kbli.csv tidak ditemukan. Harap sediakan file tersebut.")
+    kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])  # Dataframe kosong sebagai fallback
 
 # Fungsi prediksi dengan persentase keyakinan
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
@@ -37,11 +40,9 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
     with torch.no_grad():
         outputs = model(**inputs)
     logits = outputs.logits
-    # Apply softmax to get probabilities
-    probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]  # Move to CPU and convert to numpy
-    predicted_class = np.argmax(probabilities)  # Get the index of the highest probability
-    confidence = probabilities[predicted_class] * 100  # Convert to percentage
-    # Debugging
+    probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]
+    predicted_class = np.argmax(probabilities)
+    confidence = probabilities[predicted_class] * 100
     st.write(f"Indeks prediksi: {predicted_class}")
     try:
         predicted_label = label_encoder.inverse_transform([predicted_class])[0]
@@ -69,13 +70,19 @@ if submit_button:
             st.success("Hasil Prediksi:")
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
-            # st.write(f"DEBUG -- length of KBLI: {len(prediction)}")
             prediction = str(prediction)
+            # Pengecekan panjang kode KBLI
             if len(prediction) == 4:
-                prediction = '0'+prediction
+                prediction = '0' + prediction
             else:
                 pass
             st.write(f"**Kode KBLI:** {prediction}")
+            # Cari deskripsi dari konsep_kbli.csv berdasarkan kode KBLI
+            deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
+            if len(deskripsi) > 0:
+                st.write(f"**Deskripsi:** {deskripsi[0]}")
+            else:
+                st.write("**Deskripsi:** Tidak ditemukan deskripsi untuk kode KBLI ini.")
             st.write(f"**Keyakinan Model:** {confidence:.2f}%")
             st.write(f"**Waktu Inferensi:** {inference_time:.6f} detik")
     else:
