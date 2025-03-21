@@ -53,7 +53,7 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
         return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
 
 # Antarmuka Streamlit
-st.title("cArikBli - KBLI 2015")
+st.title("cAriKBLI - KBLI 2015")
 st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
 # Form input
