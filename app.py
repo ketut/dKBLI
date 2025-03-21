@@ -58,8 +58,8 @@ st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
 # Form input
 with st.form(key="kbli_form"):
-    r201 = st.text_input("Rincian 201 - Tuliskan secara lengkap jenis kegiatan utama (meliputi proses dan output)", value="Menjual Canang sari")
-    r202 = st.text_input("Rincian 202 - Produk utama (barang atau jasa) yang dihasilkan/dijual", value="Canang sari")
+    r201 = st.text_input("Rincian 201 - Tuliskan secara lengkap jenis kegiatan utama (meliputi proses dan output)", value="Menjual pisang goreng")
+    r202 = st.text_input("Rincian 202 - Produk utama (barang atau jasa) yang dihasilkan/dijual", value="Pisang goreng")
     submit_button = st.form_submit_button(label="Cari Kode KBLI")
 
 # Proses setelah tombol ditekan
