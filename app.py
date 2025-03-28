@@ -20,7 +20,8 @@ model.to(device)
 # Coba memuat label_encoder dari file .pth
 try:
     # Gunakan weights_only=False untuk memuat objek non-tensor (dengan peringatan keamanan)
-    label_encoder = torch.load("label_encoder.pth", map_location=device, weights_only=False)
+    # label_encoder = torch.load("label_encoder.pth", map_location=device, weights_only=False)
+    label_encoder = joblin.load("label_encoder_v3.pkl")
     # Verifikasi apakah itu LabelEncoder
     if not isinstance(label_encoder, LabelEncoder):
         raise ValueError("File label_encoder.pth tidak berisi objek LabelEncoder yang valid.")
