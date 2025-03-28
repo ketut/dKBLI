@@ -10,13 +10,14 @@ import pandas as pd  # Ditambahkan untuk membaca file CSV
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model dan tokenizer dari Hugging Face
-tokenizer = AutoTokenizer.from_pretrained("ketut/dKBLI")
-model = AutoModelForSequenceClassification.from_pretrained("ketut/dKBLI")
+tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli")
+model = AutoModelForSequenceClassification.from_pretrained("ketut/IndoBERTkbli")
 model.to(device)
 
 # Coba memuat label_encoder (jika ada file lokal)
 try:
-    label_encoder = joblib.load("label_encoder.pkl")
+    # label_encoder = joblib.load("label_encoder.pkl")
+    label_encoder = joblib.load("label_encoder.pth")
 except FileNotFoundError:
     st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
     kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
