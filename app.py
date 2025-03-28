@@ -5,6 +5,7 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
+import joblin
 
 # Set page config sebagai perintah pertama
 st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
