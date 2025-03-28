@@ -55,7 +55,7 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
 
 # Antarmuka Streamlit
 st.set_page_config(page_title="cAriKBLI", page_icon="🔍") 
-st.image("cariKBLI.png")
+st.image("cariKBLI.png", width=120)
 # st.title("cAriKBLI - KBLI 2015")
 st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
