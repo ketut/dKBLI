@@ -17,10 +17,7 @@ model.to(device)
 
 # Coba memuat label_encoder (jika ada file lokal)
 try:
-    # label_encoder = joblib.load("label_encoder.pkl")
-    label_encoder = torch.load("label_encoder.pth", map_location=device)
-    # label_encoder = joblib.load("label_encoder.pth")
-    # label_encoder = torch.load("label_encoder.pth")
+    label_encoder = joblib.load("label_encoder_v2.pkl")
 except FileNotFoundError:
     st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
     kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
