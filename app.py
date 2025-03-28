@@ -6,6 +6,9 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
+# Set page config sebagai perintah pertama
+st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
+
 # Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -16,7 +19,8 @@ model.to(device)
 
 # Coba memuat label_encoder dari file .pth
 try:
-    label_encoder = torch.load("label_encoder.pth", map_location=device)
+    # Gunakan weights_only=False untuk memuat objek non-tensor (dengan peringatan keamanan)
+    label_encoder = torch.load("label_encoder.pth", map_location=device, weights_only=False)
     # Verifikasi apakah itu LabelEncoder
     if not isinstance(label_encoder, LabelEncoder):
         raise ValueError("File label_encoder.pth tidak berisi objek LabelEncoder yang valid.")
@@ -60,7 +64,6 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
         return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
 
 # Antarmuka Streamlit
-st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
 st.image("cariKBLI.png", width=120)
 st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
