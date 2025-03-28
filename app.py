@@ -2,9 +2,8 @@ import streamlit as st
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import time
-import joblib
 import numpy as np
-import pandas as pd  # Ditambahkan untuk membaca file CSV
+import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
 # Setup device
@@ -15,24 +14,31 @@ tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli")
 model = AutoModelForSequenceClassification.from_pretrained("ketut/IndoBERTkbli")
 model.to(device)
 
-# Coba memuat label_encoder (jika ada file lokal)
+# Coba memuat label_encoder dari file .pth
 try:
-    label_encoder = joblib.load("label_encoder_v2.pkl")
+    label_encoder = torch.load("label_encoder.pth", map_location=device)
+    # Verifikasi apakah itu LabelEncoder
+    if not isinstance(label_encoder, LabelEncoder):
+        raise ValueError("File label_encoder.pth tidak berisi objek LabelEncoder yang valid.")
 except FileNotFoundError:
-    st.warning("File label_encoder.pkl tidak ditemukan. Menggunakan contoh sementara.")
+    st.warning("File label_encoder.pth tidak ditemukan. Menggunakan contoh sementara.")
     kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
-    from sklearn.preprocessing import LabelEncoder
+    label_encoder = LabelEncoder()
+    label_encoder.fit(kbli_codes)
+except Exception as e:
+    st.error(f"Gagal memuat label_encoder.pth: {e}")
+    st.warning("Menggunakan contoh sementara karena error.")
+    kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
     label_encoder = LabelEncoder()
     label_encoder.fit(kbli_codes)
 
-# Load file konsep_kbli.csv (pastikan file ada di direktori yang sama atau sesuaikan path-nya)
+# Load file konsep_kbli.csv
 try:
     kbli_df = pd.read_csv("konsep_kbli.csv")
-    # Pastikan kolom 'kode_kbli' bertipe str
     kbli_df["kode_kbli"] = kbli_df["kode_kbli"].astype(str)
 except FileNotFoundError:
     st.error("File konsep_kbli.csv tidak ditemukan. Harap sediakan file tersebut.")
-    kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])  # Dataframe kosong sebagai fallback
+    kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])
 
 # Fungsi prediksi dengan persentase keyakinan
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
@@ -49,14 +55,13 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
     st.write(f"Indeks prediksi: {predicted_class}")
     try:
         predicted_label = label_encoder.inverse_transform([predicted_class])[0]
-        return str(predicted_label), confidence  # Pastikan predicted_label bertipe str
+        return str(predicted_label), confidence
     except ValueError:
         return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
 
 # Antarmuka Streamlit
-st.set_page_config(page_title="cAriKBLI", page_icon="🔍") 
+st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
 st.image("cariKBLI.png", width=120)
-# st.title("cAriKBLI - KBLI 2015")
 st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
 
 # Form input
@@ -76,15 +81,11 @@ if submit_button:
             st.write(f"**Rincian 201:** {r201}")
             st.write(f"**Rincian 202:** {r202}")
             deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
-            # Pengecekan panjang kode KBLI (prediction sudah str dari fungsi predict_r201b)
             if len(prediction) == 4:
                 prediction = '0' + prediction
             else:
                 prediction = prediction
-            # deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
             st.write(f"**Kode KBLI:** {prediction}")
-            # Cari deskripsi dari konsep_kbli.csv berdasarkan kode KBLI
-            
             if len(deskripsi) > 0:
                 st.write(f"**Deskripsi:** {deskripsi[0]}")
             else:
