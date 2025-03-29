@@ -14,15 +14,15 @@ st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model dan tokenizer dari Hugging Face
-tokenizer = AutoTokenizer.from_pretrained("ketut/dKBLI")
-model = AutoModelForSequenceClassification.from_pretrained("ketut/dKBLI")
+tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli")
+model = AutoModelForSequenceClassification.from_pretrained("ketut/IndoBERTkbli")
 model.to(device)
 
 # Coba memuat label_encoder dari file .pth
 try:
     # Gunakan weights_only=False untuk memuat objek non-tensor (dengan peringatan keamanan)
     # label_encoder = torch.load("label_encoder.pth", map_location=device, weights_only=False)
-    label_encoder = joblib.load("label_encoder.pkl")
+    label_encoder = joblib.load("label_encoder_base_p2_augmented.pkl")
     # Verifikasi apakah itu LabelEncoder
     if not isinstance(label_encoder, LabelEncoder):
         raise ValueError("File label_encoder.pth tidak berisi objek LabelEncoder yang valid.")
