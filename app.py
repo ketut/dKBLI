@@ -8,7 +8,7 @@ from sklearn.preprocessing import LabelEncoder
 import joblib
 
 # Set page config sebagai perintah pertama
-st.set_page_config(page_title="cAriKBLI", page_icon="🔍")
+st.set_page_config(page_title="cAriKBLI", page_icon="<< 🔍 >>")
 
 # Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
