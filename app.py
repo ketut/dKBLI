@@ -14,7 +14,7 @@ st.set_page_config(page_title="cAriKBLI", page_icon="<< 🔍 >>")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Load model dan tokenizer dari Hugging Face
-tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli")
+tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli", trust_remote_code=True)
 model = AutoModelForSequenceClassification.from_pretrained("ketut/IndoBERTkbli")
 model.to(device)
 
