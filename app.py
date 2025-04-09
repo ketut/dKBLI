@@ -70,6 +70,7 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
 # Antarmuka Streamlit
 st.image("cariKBLI.png", width=120)
 st.write("Masukkan Rincian Kegiatan Utama dan Produk Utama untuk mendapatkan kode KBLI.")
+st.write("nb: Masih KBLI 2015, KBLI2020 coming soon ya")
 
 # Form input
 with st.form(key="kbli_form"):
