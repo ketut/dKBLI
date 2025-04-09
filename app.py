@@ -69,12 +69,12 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
 
 # Antarmuka Streamlit
 st.image("cariKBLI.png", width=120)
-st.write("Masukkan Rincian 201 dan Rincian 202 untuk mendapatkan kode KBLI.")
+st.write("Masukkan Rincian Kegiatan Utama dan Produk Utama untuk mendapatkan kode KBLI.")
 
 # Form input
 with st.form(key="kbli_form"):
-    r201 = st.text_input("Rincian 201 - Tuliskan secara lengkap jenis kegiatan utama (meliputi proses dan output)", value="Menjual pisang goreng")
-    r202 = st.text_input("Rincian 202 - Produk utama (barang atau jasa) yang dihasilkan/dijual", value="Pisang goreng")
+    r201 = st.text_input("Tuliskan secara lengkap jenis kegiatan utama (meliputi proses dan output)", value="Menjual pisang goreng")
+    r202 = st.text_input("Produk utama (barang atau jasa) yang dihasilkan/dijual", value="Pisang goreng")
     submit_button = st.form_submit_button(label="Cari Kode KBLI")
 
 # Proses setelah tombol ditekan
@@ -85,8 +85,8 @@ if submit_button:
             prediction, confidence = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
             inference_time = time.time() - start_time
             st.success("Hasil Prediksi:")
-            st.write(f"**Rincian 201:** {r201}")
-            st.write(f"**Rincian 202:** {r202}")
+            st.write(f"**Kegiatan Utama:** {r201}")
+            st.write(f"**Produk Utama:** {r202}")
             deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
             if len(prediction) == 4:
                 prediction = '0' + prediction
