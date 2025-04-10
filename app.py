@@ -7,48 +7,43 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import joblib
 
-# Set page config sebagai perintah pertama
+# Set page config
 st.set_page_config(page_title="cAriKBLI", page_icon="<< 🔍 >>")
 
 # Setup device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Load model dan tokenizer dari Hugging Face
+# Load model dan tokenizer
 tokenizer = AutoTokenizer.from_pretrained("ketut/IndoBERTkbli")
 model = AutoModelForSequenceClassification.from_pretrained("ketut/IndoBERTkbli")
-# tokenizer = AutoTokenizer.from_pretrained("ketut/dKBLI", trust_remote_code=True)
-# model = AutoModelForSequenceClassification.from_pretrained("ketut/dKBLI")
 model.to(device)
 
-# Coba memuat label_encoder dari file .pth
+# Load label_encoder
 try:
-    # Gunakan weights_only=False untuk memuat objek non-tensor (dengan peringatan keamanan)
-    # label_encoder = torch.load("label_encoder.pth", map_location=device, weights_only=False)
     label_encoder = joblib.load("label_encoder_base_p2_augmented.pkl")
-    # Verifikasi apakah itu LabelEncoder
     if not isinstance(label_encoder, LabelEncoder):
-        raise ValueError("File label_encoder.pth tidak berisi objek LabelEncoder yang valid.")
+        raise ValueError("File tidak berisi LabelEncoder.")
 except FileNotFoundError:
-    st.warning("File label_encoder.pth tidak ditemukan. Menggunakan contoh sementara.")
-    kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
+    st.warning("File label_encoder tidak ditemukan. Menggunakan kode dummy.")
+    kbli_codes = ["47771", "47772", "47773"]
     label_encoder = LabelEncoder()
     label_encoder.fit(kbli_codes)
 except Exception as e:
-    st.error(f"Gagal memuat label_encoder.pth: {e}")
-    st.warning("Menggunakan contoh sementara karena error.")
-    kbli_codes = ["47771", "47772", "47773"]  # GANTI DENGAN DAFTAR KODE KBLI ASLI
+    st.error(f"Error loading label_encoder: {e}")
+    st.warning("Menggunakan kode dummy.")
+    kbli_codes = ["47771", "47772", "47773"]
     label_encoder = LabelEncoder()
     label_encoder.fit(kbli_codes)
 
-# Load file konsep_kbli.csv
+# Load konsep_kbli.csv
 try:
     kbli_df = pd.read_csv("konsep_kbli.csv")
     kbli_df["kode_kbli"] = kbli_df["kode_kbli"].astype(str)
 except FileNotFoundError:
-    st.error("File konsep_kbli.csv tidak ditemukan. Harap sediakan file tersebut.")
+    st.error("File konsep_kbli.csv tidak ditemukan.")
     kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])
 
-# Fungsi prediksi dengan persentase keyakinan
+# Fungsi prediksi top-2
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
     combined_text = f"{text_r201} {text_r202}"
     inputs = tokenizer(combined_text, padding=True, truncation=True, max_length=128, return_tensors="pt")
@@ -58,14 +53,16 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
         outputs = model(**inputs)
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]
-    predicted_class = np.argmax(probabilities)
-    confidence = probabilities[predicted_class] * 100
-    st.write(f"Indeks prediksi: {predicted_class}")
-    try:
-        predicted_label = label_encoder.inverse_transform([predicted_class])[0]
-        return str(predicted_label), confidence
-    except ValueError:
-        return f"Error: Indeks {predicted_class} tidak ada di label_encoder", 0.0
+    top2_indices = np.argsort(probabilities)[-2:][::-1]
+    top2_preds = []
+    for idx in top2_indices:
+        try:
+            label = label_encoder.inverse_transform([idx])[0]
+        except ValueError:
+            label = f"Error: Indeks {idx} tidak ada di label_encoder"
+        confidence = probabilities[idx] * 100
+        top2_preds.append((str(label), confidence))
+    return top2_preds
 
 # Antarmuka Streamlit
 st.image("cariKBLI.png", width=120)
@@ -78,27 +75,30 @@ with st.form(key="kbli_form"):
     r202 = st.text_input("Produk utama (barang atau jasa) yang dihasilkan/dijual", value="Pisang goreng")
     submit_button = st.form_submit_button(label="Cari Kode KBLI")
 
-# Proses setelah tombol ditekan
+# Proses prediksi
 if submit_button:
     if r201 and r202:
         with st.spinner("Memprediksi kode KBLI..."):
             start_time = time.time()
-            prediction, confidence = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
+            top2_predictions = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
             inference_time = time.time() - start_time
+
             st.success("Hasil Prediksi:")
             st.write(f"**Kegiatan Utama:** {r201}")
             st.write(f"**Produk Utama:** {r202}")
-            deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction]["deskripsi"].values
-            if len(prediction) == 4:
-                prediction = '0' + prediction
-            else:
-                prediction = prediction
-            st.write(f"**Kode KBLI:** {prediction}")
-            if len(deskripsi) > 0:
-                st.write(f"**Deskripsi:** {deskripsi[0]}")
-            else:
-                st.write("**Deskripsi:** Tidak ditemukan deskripsi untuk kode KBLI ini.")
-            st.write(f"**Keyakinan Model:** {confidence:.2f}%")
+            for i, (prediction, confidence) in enumerate(top2_predictions, start=1):
+                if len(prediction) == 4:
+                    prediction_display = '0' + prediction
+                else:
+                    prediction_display = prediction
+                st.markdown(f"### 🔹 Top-{i} Prediksi:")
+                st.write(f"**Kode KBLI:** {prediction_display}")
+                deskripsi = kbli_df[kbli_df["kode_kbli"] == prediction_display]["deskripsi"].values
+                if len(deskripsi) > 0:
+                    st.write(f"**Deskripsi:** {deskripsi[0]}")
+                else:
+                    st.write("**Deskripsi:** Tidak ditemukan untuk kode ini.")
+                st.write(f"**Keyakinan Model:** {confidence:.2f}%")
             st.write(f"**Waktu Inferensi:** {inference_time:.6f} detik")
     else:
         st.warning("Harap isi kedua rincian sebelum mencari!")
