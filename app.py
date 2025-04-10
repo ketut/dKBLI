@@ -43,7 +43,7 @@ except FileNotFoundError:
     st.error("File konsep_kbli.csv tidak ditemukan.")
     kbli_df = pd.DataFrame(columns=["kode_kbli", "deskripsi"])
 
-# Fungsi prediksi top-2
+# Fungsi prediksi top-3
 def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device):
     combined_text = f"{text_r201} {text_r202}"
     inputs = tokenizer(combined_text, padding=True, truncation=True, max_length=128, return_tensors="pt")
@@ -53,16 +53,16 @@ def predict_r201b(text_r201, text_r202, model, tokenizer, label_encoder, device)
         outputs = model(**inputs)
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=-1).cpu().numpy()[0]
-    top2_indices = np.argsort(probabilities)[-2:][::-1]
-    top2_preds = []
-    for idx in top2_indices:
+    top3_indices = np.argsort(probabilities)[-3:][::-1]
+    top3_preds = []
+    for idx in top3_indices:
         try:
             label = label_encoder.inverse_transform([idx])[0]
         except ValueError:
             label = f"Error: Indeks {idx} tidak ada di label_encoder"
         confidence = probabilities[idx] * 100
-        top2_preds.append((str(label), confidence))
-    return top2_preds
+        top3_preds.append((str(label), confidence))
+    return top3_preds
 
 # Antarmuka Streamlit
 st.image("cariKBLI.png", width=120)
@@ -80,13 +80,13 @@ if submit_button:
     if r201 and r202:
         with st.spinner("Memprediksi kode KBLI..."):
             start_time = time.time()
-            top2_predictions = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
+            top3_predictions = predict_r201b(r201, r202, model, tokenizer, label_encoder, device)
             inference_time = time.time() - start_time
 
             st.success("Hasil Prediksi:")
             st.write(f"**Kegiatan Utama:** {r201}")
             st.write(f"**Produk Utama:** {r202}")
-            for i, (prediction, confidence) in enumerate(top2_predictions, start=1):
+            for i, (prediction, confidence) in enumerate(top3_predictions, start=1):
                 if len(prediction) == 4:
                     prediction_display = '0' + prediction
                 else:
