@@ -123,7 +123,7 @@ with tab2:
     # df berasal dari kdsls.geojson, di export as shapefile, trs diexport lagi as csv dengan geometry option pake as_wkt, dapetla multipolygon
     df = pd.read_csv(r"csv_kdsls25.csv")
     df['polygon'] = df['WKT'].apply(wkt.loads)
-    st.markdown("Dataframe menggunakan data :orange[Kabupaten Badung semester I 2024]")
+    st.markdown("Dataframe menggunakan data :orange[Kabupaten Badung semester II 2025]")
 
     # function search
     def search(coordinate):
