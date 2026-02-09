@@ -121,7 +121,7 @@ with tab2:
     coord = st.text_input("Input koordinat, lalu press enter" , placeholder="-8.12345, 115.12345")
 
     # df berasal dari kdsls.geojson, di export as shapefile, trs diexport lagi as csv dengan geometry option pake as_wkt, dapetla multipolygon
-    df = pd.read_csv(r"csv_kdsls.csv")
+    df = pd.read_csv(r"csv_kdsls25.csv")
     df['polygon'] = df['WKT'].apply(wkt.loads)
     st.markdown("Dataframe menggunakan data :orange[Kabupaten Badung semester I 2024]")
 
